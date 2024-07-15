@@ -1,47 +1,76 @@
-import { PrismaClient } from '@prisma/client';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { id } = req.query;
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
 
-  if (req.method === 'GET') {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: String(id) },
-      });
-      if (user) {
-        return res.status(200).json(user);
-      } else {
-        return res.status(404).json({ error: 'User not found' });
-      }
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal Server Error' });
+  if (!id) {
+    return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: String(id) },
+    });
+    if (user) {
+      return NextResponse.json(user, { status: 200 });
+    } else {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-  } else if (req.method === 'PUT') {
-    const { name, email } = req.body;
-    try {
-      const updatedUser = await prisma.user.update({
-        where: { id: String(id) },
-        data: { name, email },
-      });
-      return res.status(200).json(updatedUser);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  } else if (req.method === 'DELETE') {
-    try {
-      await prisma.user.delete({
-        where: { id: String(id) },
-      });
-      return res.status(204).end();
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  } else {
-    res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  const { name, email } = await req.json();
+
+  if (!id) {
+    return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+  }
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: String(id) },
+      data: { name, email },
+    });
+    return NextResponse.json(updatedUser, { status: 200 });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+  }
+
+  try {
+    await prisma.user.delete({
+      where: { id: String(id) },
+    });
+    return NextResponse.json({}, { status: 204 });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

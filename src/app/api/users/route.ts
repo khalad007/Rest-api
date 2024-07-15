@@ -1,32 +1,36 @@
-import { PrismaClient } from '@prisma/client';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'GET') {
-    try {
-      const users = await prisma.user.findMany();
-      return res.status(200).json(users);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  } else if (req.method === 'POST') {
-    const { name, email } = req.body;
-    try {
-      const newUser = await prisma.user.create({
-        data: {
-          name,
-          email,
-        },
-      });
-      return res.status(201).json(newUser);
-    } catch (error) {
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  } else {
-    res.setHeader('Allow', ['GET', 'POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+export async function GET() {
+  try {
+    const users = await prisma.user.findMany();
+    return NextResponse.json(users, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { name, email } = await req.json();
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+      },
+    });
+    return NextResponse.json(newUser, { status: 201 });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
