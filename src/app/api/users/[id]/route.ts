@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
-
+// get single data
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-
+// update single data
 export async function PUT(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest) {
     );
   }
 }
-
+// delete single data
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
